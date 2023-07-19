@@ -39,14 +39,24 @@ const curry = function (func) {
         }
     };
 }
-const curryRight = pipe(flip, curry);
+const curryRight = function (func) {
+    return function curried(...args) {
+        if (args.length >= func.length) {
+            return func.apply(this, [...args].reverse());
+        } else {
+            return function (...args2) {
+                return curried.apply(this, args.concat(args2));
+            }
+        }
+    };
+}
 
 const log = (value) => {
     console.log(value);
     return value;
 };
 
-const allPass = (...fns) => (value) => !fns.some(fn => !fn(value));
+const allPass = (...fns) => (value) => fns.every(fn => fn(value));
 const anyPass = (...fns) => (value) => fns.some(fn => fn(value));
 
 const checkColor = (a, b) => a === b;
@@ -90,9 +100,9 @@ const gte2 = partialRight(gte, 2);
 const or = (pred1, pred2, value) => pred1(value) || pred2(value);
 const and = (a) => (b) => a && b;
 const negative = (value) => !value;
-const equals = (pred1, pred2, value) => pred1(value) === pred2(value);
 
-const curriedEquals = curry(equals);
+const equals = (a, b) => a === b;
+const curriedEquals = curry((p1, p2, value) => equals(p1(value), p2(value)));
 
 const isRedStarAndGreenSquareOthersAreWhite = allPass(
     pipe(getTriangle, isWhite),
