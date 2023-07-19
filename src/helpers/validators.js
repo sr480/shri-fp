@@ -53,9 +53,10 @@ const checkColor = (a, b) => a === b;
 const isRed = partial(checkColor, 'red');
 const isGreen = partial(checkColor, 'green');
 const isBlue = partial(checkColor, 'blue');
+const isOrange = partial(checkColor, 'orange');
 const isWhite = partial(checkColor, 'white');
 
-const getStart = (a) => a.star;
+const getStar = (a) => a.star;
 const getSquare = (a) => a.square;
 const getTriangle = (a) => a.triangle;
 const getCircle = (a) => a.circle;
@@ -64,21 +65,21 @@ const count = (...predicates) => (value) => predicates.filter(pred => pred(value
 
 const countGreen = count(
     pipe(getTriangle, isGreen),
-    pipe(getStart, isGreen),
+    pipe(getStar, isGreen),
     pipe(getCircle, isGreen),
     pipe(getSquare, isGreen),
 );
 
 const countRed = count(
     pipe(getTriangle, isRed),
-    pipe(getStart, isRed),
+    pipe(getStar, isRed),
     pipe(getCircle, isRed),
     pipe(getSquare, isRed)
 );
 
 const countBlue = count(
     pipe(getTriangle, isBlue),
-    pipe(getStart, isBlue),
+    pipe(getStar, isBlue),
     pipe(getCircle, isBlue),
     pipe(getSquare, isBlue)
 );
@@ -89,20 +90,14 @@ const gte2 = partialRight(gte, 2);
 const or = (pred1, pred2, value) => pred1(value) || pred2(value);
 const and = (a) => (b) => a && b;
 const negative = (value) => !value;
-const equals = (pred1, pred2, value) => {
-    console.log(countRed(value));
-    const a = pred1(value);
-    const b = pred2(value);
-    console.log({a,b, value});
-    return a === b;
-}
+const equals = (pred1, pred2, value) => pred1(value) === pred2(value);
 
 const curriedEquals = curry(equals);
 
 const isRedStarAndGreenSquareOthersAreWhite = allPass(
     pipe(getTriangle, isWhite),
     pipe(getCircle, isWhite),
-    pipe(getStart, isRed),
+    pipe(getStar, isRed),
     pipe(getSquare, isGreen)
 );
 
@@ -116,7 +111,11 @@ export const validateFieldN2 = pipe(countGreen, gte2);
 export const validateFieldN3 = curriedEquals(countRed, countBlue);
 
 // 4. Синий круг, красная звезда, оранжевый квадрат треугольник любого цвета
-export const validateFieldN4 = () => false;
+export const validateFieldN4 = allPass(
+    pipe(getCircle, isBlue),
+    pipe(getStar, isRed),
+    pipe(getSquare, isOrange)
+)
 
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
 export const validateFieldN5 = () => false;
