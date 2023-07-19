@@ -13,20 +13,107 @@
  * Если какие либо функции написаны руками (без использования библиотек) это не является ошибкой
  */
 
-// 1. Красная звезда, зеленый квадрат, все остальные белые.
-export const validateFieldN1 = ({star, square, triangle, circle}) => {
-    if (triangle !== 'white' || circle !== 'white') {
-        return false;
+const pipe = (...fns) => {
+    return (value) => {
+        let result = value;
+        for (const fn of fns) {
+            result = fn(result);
+        }
+        return result;
     }
+}
+const flip = (fn) => (...args) => fn(...args.reverse());
 
-    return star === 'red' && square === 'green';
+const partial = (fn, ...values) => (...args) => fn(...values, ...args);
+const partialRight = (fn, ...values) => (...args) => fn(...args, ...values);
+
+
+const curry = function (func) {
+    return function curried(...args) {
+        if (args.length >= func.length) {
+            return func.apply(this, args);
+        } else {
+            return function (...args2) {
+                return curried.apply(this, args.concat(args2));
+            }
+        }
+    };
+}
+const curryRight = pipe(flip, curry);
+
+const log = (value) => {
+    console.log(value);
+    return value;
 };
 
+const allPass = (...fns) => (value) => !fns.some(fn => !fn(value));
+const anyPass = (...fns) => (value) => fns.some(fn => fn(value));
+
+const checkColor = (a, b) => a === b;
+const isRed = partial(checkColor, 'red');
+const isGreen = partial(checkColor, 'green');
+const isBlue = partial(checkColor, 'blue');
+const isWhite = partial(checkColor, 'white');
+
+const getStart = (a) => a.star;
+const getSquare = (a) => a.square;
+const getTriangle = (a) => a.triangle;
+const getCircle = (a) => a.circle;
+
+const count = (...predicates) => (value) => predicates.filter(pred => pred(value)).length;
+
+const countGreen = count(
+    pipe(getTriangle, isGreen),
+    pipe(getStart, isGreen),
+    pipe(getCircle, isGreen),
+    pipe(getSquare, isGreen),
+);
+
+const countRed = count(
+    pipe(getTriangle, isRed),
+    pipe(getStart, isRed),
+    pipe(getCircle, isRed),
+    pipe(getSquare, isRed)
+);
+
+const countBlue = count(
+    pipe(getTriangle, isBlue),
+    pipe(getStart, isBlue),
+    pipe(getCircle, isBlue),
+    pipe(getSquare, isBlue)
+);
+
+const gte = (value, compareTo) => value >= compareTo;
+const gte2 = partialRight(gte, 2);
+
+const or = (pred1, pred2, value) => pred1(value) || pred2(value);
+const and = (a) => (b) => a && b;
+const negative = (value) => !value;
+const equals = (pred1, pred2, value) => {
+    console.log(countRed(value));
+    const a = pred1(value);
+    const b = pred2(value);
+    console.log({a,b, value});
+    return a === b;
+}
+
+const curriedEquals = curry(equals);
+
+const isRedStarAndGreenSquareOthersAreWhite = allPass(
+    pipe(getTriangle, isWhite),
+    pipe(getCircle, isWhite),
+    pipe(getStart, isRed),
+    pipe(getSquare, isGreen)
+);
+
+// 1. Красная звезда, зеленый квадрат, все остальные белые.
+export const validateFieldN1 = isRedStarAndGreenSquareOthersAreWhite;
+
 // 2. Как минимум две фигуры зеленые.
-export const validateFieldN2 = () => false;
+export const validateFieldN2 = pipe(countGreen, gte2);
 
 // 3. Количество красных фигур равно кол-ву синих.
-export const validateFieldN3 = () => false;
+export const validateFieldN3 = curriedEquals(countRed, countBlue);
 
 // 4. Синий круг, красная звезда, оранжевый квадрат треугольник любого цвета
 export const validateFieldN4 = () => false;
