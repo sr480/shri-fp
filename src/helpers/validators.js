@@ -73,29 +73,21 @@ const getCircle = (a) => a.circle;
 
 const count = (...predicates) => (value) => predicates.filter(pred => pred(value)).length;
 
-const countGreen = count(
-    pipe(getTriangle, isGreen),
-    pipe(getStar, isGreen),
-    pipe(getCircle, isGreen),
-    pipe(getSquare, isGreen),
+const countByColor = (isColor) => count(
+    pipe(getTriangle, isColor),
+    pipe(getStar, isColor),
+    pipe(getCircle, isColor),
+    pipe(getSquare, isColor)
 );
 
-const countRed = count(
-    pipe(getTriangle, isRed),
-    pipe(getStar, isRed),
-    pipe(getCircle, isRed),
-    pipe(getSquare, isRed)
-);
-
-const countBlue = count(
-    pipe(getTriangle, isBlue),
-    pipe(getStar, isBlue),
-    pipe(getCircle, isBlue),
-    pipe(getSquare, isBlue)
-);
+const countGreen = countByColor(isGreen);
+const countRed = countByColor(isRed);
+const countBlue = countByColor(isBlue);
+const countOrange = countByColor(isOrange);
 
 const gte = (value, compareTo) => value >= compareTo;
 const gte2 = partialRight(gte, 2);
+const gte3 = partialRight(gte, 3);
 
 const or = (pred1, pred2, value) => pred1(value) || pred2(value);
 const and = (a) => (b) => a && b;
@@ -110,6 +102,14 @@ const isRedStarAndGreenSquareOthersAreWhite = allPass(
     pipe(getStar, isRed),
     pipe(getSquare, isGreen)
 );
+
+const anyThreeOfSameColor = anyPass(
+    pipe(countGreen, gte3),
+    pipe(countRed, gte3),
+    pipe(countBlue, gte3),
+    pipe(countOrange, gte3),
+);
+
 
 // 1. Красная звезда, зеленый квадрат, все остальные белые.
 export const validateFieldN1 = isRedStarAndGreenSquareOthersAreWhite;
@@ -128,7 +128,7 @@ export const validateFieldN4 = allPass(
 )
 
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
-export const validateFieldN5 = () => false;
+export const validateFieldN5 = anyThreeOfSameColor;
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
 export const validateFieldN6 = () => false;
