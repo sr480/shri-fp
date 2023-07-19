@@ -95,6 +95,7 @@ const negative = (value) => !value;
 
 const equals = (a, b) => a === b;
 const curriedEquals = curry((p1, p2, value) => equals(p1(value), p2(value)));
+const equals4 = (value) => equals(value, 4);
 
 const isRedStarAndGreenSquareOthersAreWhite = allPass(
     pipe(getTriangle, isWhite),
@@ -130,17 +131,24 @@ export const validateFieldN4 = allPass(
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
 export const validateFieldN5 = anyThreeOfSameColor;
 
-// 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
+// 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. 
+// Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
 export const validateFieldN6 = () => false;
 
 // 7. Все фигуры оранжевые.
-export const validateFieldN7 = () => false;
+export const validateFieldN7 = pipe(countOrange, equals4);
 
 // 8. Не красная и не белая звезда, остальные – любого цвета.
-export const validateFieldN8 = () => false;
+export const validateFieldN8 = allPass(
+    pipe(getStar, isRed, negative),
+    pipe(getStar, isWhite, negative),
+);
 
 // 9. Все фигуры зеленые.
-export const validateFieldN9 = () => false;
+export const validateFieldN9 = pipe(countGreen, equals4);
 
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
-export const validateFieldN10 = () => false;
+export const validateFieldN10 = allPass(
+    curriedEquals(getTriangle, getSquare),
+    pipe(getTriangle, isWhite, negative)
+);
