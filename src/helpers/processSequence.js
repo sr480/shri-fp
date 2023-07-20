@@ -14,38 +14,75 @@
  * Иногда промисы от API будут приходить в состояние rejected, (прямо как и API в реальной жизни)
  * Ответ будет приходить в поле {result}
  */
- import Api from '../tools/api';
+import Api from '../tools/api';
+import { allPass, getProp, gt, lt, partial, partialRight, pipe, reject, runIfTrueOrElse, tap, then, thenPipe } from './mamda';
 
- const api = new Api();
+const api = new Api();
 
- /**
-  * Я – пример, удали меня
-  */
- const wait = time => new Promise(resolve => {
-     setTimeout(resolve, time);
- })
+/**
+ * Я – пример, удали меня
+ */
+const wait = time => new Promise(resolve => {
+    setTimeout(resolve, time);
+})
 
- const processSequence = ({value, writeLog, handleSuccess, handleError}) => {
-     /**
-      * Я – пример, удали меня
-      */
-     writeLog(value);
 
-     api.get('https://api.tech/numbers/base', {from: 2, to: 10, number: '01011010101'}).then(({result}) => {
-         writeLog(result);
-     });
+const requestNumberConverter = api.get('https://api.tech/numbers/base');
+const toBinnary = (value) => requestNumberConverter({ from: 10, to: 2, number: value });
+const requestAnimal = (id) => api.get(`https://animals.tech/${id}`, {});
 
-     wait(2500).then(() => {
-         writeLog('SecondLog')
+const getStringLength = getProp('length');
+const getResult = getProp('result');
 
-         return wait(1500);
-     }).then(() => {
-         writeLog('ThirdLog');
+const square = (value) => value ** 2;
+const mod3 = (value) => value % 3;
 
-         return wait(400);
-     }).then(() => {
-         handleSuccess('Done');
-     });
- }
+const gt2 = partialRight(gt, 2);
+const lt10 = partialRight(lt, 10);
+
+const isPositiveNumber = (value) => /^\d+(.\d+)?$/.test(value);
+
+const validateInput = allPass(
+    pipe(getStringLength, gt2),
+    pipe(getStringLength, lt10),
+    isPositiveNumber
+)
+
+const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
+    const tapLog = tap(writeLog);
+
+    const onValidationError = partial(handleError, 'ValidationError');
+    const onSuccess = then(handleSuccess);
+    const onError = reject(handleError);
+
+    const thenRequestAnimal = then(requestAnimal);
+    const thenPorecessNumberResponse = thenPipe(
+        getResult,
+        tapLog,
+        getStringLength,
+        tapLog,
+        square,
+        mod3,
+        tapLog
+    );
+    const thenGetResult = thenPipe(getResult);
+
+    const sequence =
+        pipe(
+            tapLog,
+            Number,
+            Math.round,
+            tapLog,
+            toBinnary,
+            thenPorecessNumberResponse,
+            thenRequestAnimal,
+            thenGetResult,
+            onSuccess,
+            onError
+        );
+    const validateAndRun = runIfTrueOrElse(validateInput, sequence, onValidationError);
+
+    validateAndRun(value);
+}
 
 export default processSequence;

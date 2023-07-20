@@ -13,51 +13,7 @@
  * Если какие либо функции написаны руками (без использования библиотек) это не является ошибкой
  */
 
-const pipe = (...fns) => {
-    return (value) => {
-        let result = value;
-        for (const fn of fns) {
-            result = fn(result);
-        }
-        return result;
-    }
-}
-const flip = (fn) => (...args) => fn(...args.reverse());
-
-const partial = (fn, ...values) => (...args) => fn(...values, ...args);
-const partialRight = (fn, ...values) => (...args) => fn(...args, ...values);
-
-
-const curry = function (func) {
-    return function curried(...args) {
-        if (args.length >= func.length) {
-            return func.apply(this, args);
-        } else {
-            return function (...args2) {
-                return curried.apply(this, args.concat(args2));
-            }
-        }
-    };
-}
-const curryRight = function (func) {
-    return function curried(...args) {
-        if (args.length >= func.length) {
-            return func.apply(this, [...args].reverse());
-        } else {
-            return function (...args2) {
-                return curried.apply(this, args.concat(args2));
-            }
-        }
-    };
-}
-
-const log = (value) => {
-    console.log(value);
-    return value;
-};
-
-const allPass = (...fns) => (value) => fns.every(fn => fn(value));
-const anyPass = (...fns) => (value) => fns.some(fn => fn(value));
+import { allPass, anyPass, curry, equals, getProp, gte, lt, negative, partial, partialRight, pipe } from "./mamda";
 
 const checkColor = (a, b) => a === b;
 const isRed = partial(checkColor, 'red');
@@ -66,10 +22,10 @@ const isBlue = partial(checkColor, 'blue');
 const isOrange = partial(checkColor, 'orange');
 const isWhite = partial(checkColor, 'white');
 
-const getStar = (a) => a.star;
-const getSquare = (a) => a.square;
-const getTriangle = (a) => a.triangle;
-const getCircle = (a) => a.circle;
+const getStar = getProp('star');
+const getSquare = getProp('square');
+const getTriangle = getProp('triangle');
+const getCircle = getProp('circle');
 
 const count = (...predicates) => (value) => predicates.filter(pred => pred(value)).length;
 
@@ -84,16 +40,12 @@ const countGreen = countByColor(isGreen);
 const countRed = countByColor(isRed);
 const countBlue = countByColor(isBlue);
 const countOrange = countByColor(isOrange);
+const countWhite = countByColor(isWhite);
 
-const gte = (value, compareTo) => value >= compareTo;
 const gte2 = partialRight(gte, 2);
 const gte3 = partialRight(gte, 3);
+const lt2 = partialRight(lt, 2);
 
-const or = (pred1, pred2, value) => pred1(value) || pred2(value);
-const and = (a) => (b) => a && b;
-const negative = (value) => !value;
-
-const equals = (a, b) => a === b;
 const curriedEquals = curry((p1, p2, value) => equals(p1(value), p2(value)));
 const equals4 = (value) => equals(value, 4);
 const equals2 = (value) => equals(value, 2);
@@ -106,12 +58,16 @@ const isRedStarAndGreenSquareOthersAreWhite = allPass(
     pipe(getSquare, isGreen)
 );
 
-const anyThreeOfSameColor = anyPass(
+const anyThreeOfSameColorNotWhite = anyPass(
     pipe(countGreen, gte3),
     pipe(countRed, gte3),
     pipe(countBlue, gte3),
-    pipe(countOrange, gte3),
+    pipe(countOrange, gte3)
 );
+
+const isBlueCircle = pipe(getCircle, isBlue);
+const isRedStar = pipe(getStar, isRed);
+const isOrangeSquare = pipe(getSquare, isOrange);
 
 
 // 1. Красная звезда, зеленый квадрат, все остальные белые.
@@ -125,13 +81,13 @@ export const validateFieldN3 = curriedEquals(countRed, countBlue);
 
 // 4. Синий круг, красная звезда, оранжевый квадрат треугольник любого цвета
 export const validateFieldN4 = allPass(
-    pipe(getCircle, isBlue),
-    pipe(getStar, isRed),
-    pipe(getSquare, isOrange)
+    isBlueCircle,
+    isRedStar,
+    isOrangeSquare
 )
 
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
-export const validateFieldN5 = anyThreeOfSameColor;
+export const validateFieldN5 = anyThreeOfSameColorNotWhite;
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. 
 // Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
