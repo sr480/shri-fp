@@ -19,14 +19,6 @@ import { allPass, getProp, gt, lt, partial, partialRight, pipe, reject, runIfTru
 
 const api = new Api();
 
-/**
- * Я – пример, удали меня
- */
-const wait = time => new Promise(resolve => {
-    setTimeout(resolve, time);
-})
-
-
 const requestNumberConverter = api.get('https://api.tech/numbers/base');
 const toBinnary = (value) => requestNumberConverter({ from: 10, to: 2, number: value });
 const requestAnimal = (id) => api.get(`https://animals.tech/${id}`, {});
