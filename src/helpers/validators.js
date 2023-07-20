@@ -96,6 +96,8 @@ const negative = (value) => !value;
 const equals = (a, b) => a === b;
 const curriedEquals = curry((p1, p2, value) => equals(p1(value), p2(value)));
 const equals4 = (value) => equals(value, 4);
+const equals2 = (value) => equals(value, 2);
+const equals1 = (value) => equals(value, 1);
 
 const isRedStarAndGreenSquareOthersAreWhite = allPass(
     pipe(getTriangle, isWhite),
@@ -133,7 +135,11 @@ export const validateFieldN5 = anyThreeOfSameColor;
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. 
 // Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
-export const validateFieldN6 = () => false;
+export const validateFieldN6 = allPass(
+    pipe(getTriangle, isGreen),
+    pipe(countGreen, equals2),
+    pipe(countRed, equals1),
+)
 
 // 7. Все фигуры оранжевые.
 export const validateFieldN7 = pipe(countOrange, equals4);
