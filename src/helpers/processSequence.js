@@ -54,6 +54,7 @@ const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
         getStringLength,
         tapLog,
         square,
+        tapLog,
         mod3,
         tapLog
     );
